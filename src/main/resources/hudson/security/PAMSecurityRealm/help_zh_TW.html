@@ -1,0 +1,19 @@
+<div>
+  將驗證功能委派給底層的 Unix 作業系統使用者資料庫。
+  在這個設定下，使用者要用他們的 Unix 使用者帳號及密碼登入 Jenkins。
+
+  <p>
+  這個模式同時也讓您能用 Unix 的群組來授權。例如我們可以說「在 'developers'
+  群組裡的每一個人都有 Jenkins 系統管理員權限」。
+
+  <p>
+  Unix 允許使用者跟群組用一樣的名字。如果您需要清楚區隔，可以在名稱前加上 '@'
+  強制指定成群組。例如 '@dev' 指的就是 'dev' 群組，而不是使用者 'dev'; 如果真的有使用者叫這個名字，用
+  'dev' 會被解釋成該使用者。
+
+  <p>
+  這個功能使用 <a href="http://en.wikipedia.org/wiki/Pluggable_Authentication_Modules">PAM</a>
+  函式庫，它定義了自己一套設定機制。
+  在使用者資料庫擴充功能，例如
+  <a href="http://zh.wikipedia.org/wiki/%E7%B6%B2%E8%B7%AF%E8%B3%87%E8%A8%8A%E6%9C%8D%E5%8B%99">NIS</a> 上也能運作。
+</div>
