@@ -29,6 +29,7 @@ import hudson.Util;
 import hudson.model.Descriptor;
 import hudson.os.PosixAPI;
 import hudson.util.FormValidation;
+import jenkins.model.IdStrategy;
 import org.acegisecurity.AuthenticationException;
 import org.acegisecurity.BadCredentialsException;
 import org.acegisecurity.GrantedAuthority;
@@ -120,10 +121,34 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
         };
     }
 
+    /**
+     * {@inheritDoc}
+     * @since 1.2
+     */
+    @Override
+    public IdStrategy getUserIdStrategy() {
+        return DescriptorImpl.CASE_SENSITIVE;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @since 1.2
+     */
+    @Override
+    public IdStrategy getGroupIdStrategy() {
+        return DescriptorImpl.CASE_SENSITIVE;
+    }
+
     public static final class DescriptorImpl extends Descriptor<SecurityRealm> {
         public String getDisplayName() {
             return Messages.PAMSecurityRealm_DisplayName();
         }
+
+        /**
+         * NSS/PAM databases are case sensitive.
+         * @since 1.2
+         */
+        private static final IdStrategy CASE_SENSITIVE = new IdStrategy.CaseSensitive();
 
         public FormValidation doTest() {
             File s = new File("/etc/shadow");
