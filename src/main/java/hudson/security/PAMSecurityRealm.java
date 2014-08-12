@@ -127,7 +127,7 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
      */
     @Override
     public IdStrategy getUserIdStrategy() {
-        return DescriptorImpl.CASE_SENSITIVE;
+        return DescriptorImpl.STRATEGY;
     }
 
     /**
@@ -136,7 +136,7 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
      */
     @Override
     public IdStrategy getGroupIdStrategy() {
-        return DescriptorImpl.CASE_SENSITIVE;
+        return DescriptorImpl.STRATEGY;
     }
 
     public static final class DescriptorImpl extends Descriptor<SecurityRealm> {
@@ -145,10 +145,13 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
         }
 
         /**
-         * NSS/PAM databases are case sensitive.
+         * NSS/PAM databases are case sensitive... unless running OS-X (think different™)
          * @since 1.2
          */
-        private static final IdStrategy CASE_SENSITIVE = new IdStrategy.CaseSensitive();
+        private static final IdStrategy STRATEGY =
+                Util.fixNull(System.getProperty("os.name")).contains("OS X")
+                        ? IdStrategy.CASE_INSENSITIVE
+                        : new IdStrategy.CaseSensitive();
 
         public FormValidation doTest() {
             File s = new File("/etc/shadow");
