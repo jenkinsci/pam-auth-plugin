@@ -27,7 +27,6 @@ import hudson.Extension;
 import hudson.Functions;
 import hudson.Util;
 import hudson.model.Descriptor;
-import hudson.os.PosixAPI;
 import hudson.util.FormValidation;
 import jenkins.model.IdStrategy;
 import org.acegisecurity.AuthenticationException;
@@ -37,10 +36,6 @@ import org.acegisecurity.GrantedAuthorityImpl;
 import org.acegisecurity.userdetails.User;
 import org.acegisecurity.userdetails.UserDetails;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
-import org.jruby.ext.posix.FileStat;
-import org.jruby.ext.posix.Group;
-import org.jruby.ext.posix.POSIX;
-import org.jruby.ext.posix.Passwd;
 import org.jvnet.libpam.PAM;
 import org.jvnet.libpam.PAMException;
 import org.jvnet.libpam.UnixUser;
@@ -49,6 +44,13 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.springframework.dao.DataAccessException;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.attribute.GroupPrincipal;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.UserPrincipal;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -153,35 +155,26 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
                         ? IdStrategy.CASE_INSENSITIVE
                         : new IdStrategy.CaseSensitive();
 
-        public FormValidation doTest() {
+        public FormValidation doTest() throws IOException {
             File s = new File("/etc/shadow");
             if(s.exists() && !s.canRead()) {
                 // it looks like shadow password is in use, but we don't have read access
                 LOGGER.fine("/etc/shadow exists but not readable");
-                POSIX api = PosixAPI.get();
-                FileStat st = api.stat("/etc/shadow");
-                if(st==null)
+                final PosixFileAttributes posix;
+                try {
+                    posix = Files.getFileAttributeView(s.toPath(), PosixFileAttributeView.class).readAttributes();
+                } catch (IOException e) {
                     return FormValidation.error(Messages.PAMSecurityRealm_ReadPermission());
+                }
 
-                Passwd pwd = api.getpwuid(api.geteuid());
-                String user;
-                if(pwd!=null)   user=Messages.PAMSecurityRealm_User(pwd.getLoginName());
-                else            user=Messages.PAMSecurityRealm_CurrentUser();
+                final String user = System.getProperty("user.name");
+                final GroupPrincipal group = posix.group();
 
-                String group;
-                Group g = api.getgrgid(st.gid());
-                if(g!=null)     group=g.getName();
-                else            group=String.valueOf(st.gid());
-
-                if ((st.mode()&FileStat.S_IRGRP)!=0) {
+                if (posix.permissions().contains(PosixFilePermission.GROUP_READ)) {
                     // the file is readable to group. Jenkins should be in the right group, then
                     return FormValidation.error(Messages.PAMSecurityRealm_BelongToGroup(user, group));
                 } else {
-                    Passwd opwd = api.getpwuid(st.uid());
-                    String owner;
-                    if(opwd!=null)  owner=opwd.getLoginName();
-                    else            owner=Messages.PAMSecurityRealm_Uid(st.uid());
-
+                    final UserPrincipal owner = posix.owner();
                     return FormValidation.error(Messages.PAMSecurityRealm_RunAsUserOrBelongToGroupAndChmod(owner, user, group));
                 }
             }
