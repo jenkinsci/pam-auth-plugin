@@ -45,6 +45,7 @@ import org.jvnet.libpam.PAM;
 import org.jvnet.libpam.PAMException;
 import org.jvnet.libpam.UnixUser;
 import org.jvnet.libpam.impl.CLibrary;
+import org.kohsuke.accmod.restrictions.suppressions.SuppressRestrictedWarnings;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.springframework.dao.DataAccessException;
 
@@ -58,6 +59,7 @@ import java.util.logging.Logger;
  * @author Kohsuke Kawaguchi
  * @since 1.282
  */
+@SuppressRestrictedWarnings(Messages.class)
 public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
     public final String serviceName;
 
