@@ -28,6 +28,7 @@ import hudson.Functions;
 import hudson.Util;
 import hudson.model.Descriptor;
 import hudson.os.PosixAPI;
+import hudson.security.pam.Messages;
 import hudson.util.FormValidation;
 import jenkins.model.IdStrategy;
 import org.acegisecurity.AuthenticationException;
