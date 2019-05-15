@@ -31,6 +31,7 @@ import hudson.os.PosixAPI;
 import hudson.security.pam.Messages;
 import hudson.util.FormValidation;
 import jenkins.model.IdStrategy;
+import jenkins.model.Jenkins;
 import org.acegisecurity.AuthenticationException;
 import org.acegisecurity.BadCredentialsException;
 import org.acegisecurity.GrantedAuthority;
@@ -47,6 +48,7 @@ import org.jvnet.libpam.PAMException;
 import org.jvnet.libpam.UnixUser;
 import org.jvnet.libpam.impl.CLibrary;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.springframework.dao.DataAccessException;
 
 import java.io.File;
@@ -154,7 +156,12 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
                         ? IdStrategy.CASE_INSENSITIVE
                         : new IdStrategy.CaseSensitive();
 
+        @RequirePOST
         public FormValidation doTest() {
+            Jenkins jenkins = Jenkins.getInstance();
+            if (jenkins == null || !jenkins.hasPermission(Jenkins.ADMINISTER)) {
+                return FormValidation.ok();
+            }
             File s = new File("/etc/shadow");
             if(s.exists() && !s.canRead()) {
                 // it looks like shadow password is in use, but we don't have read access
