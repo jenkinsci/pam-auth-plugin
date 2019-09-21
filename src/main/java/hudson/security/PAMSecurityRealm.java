@@ -102,7 +102,7 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
         int i=0;
         for (String g : grps)
             groups[i++] = new GrantedAuthorityImpl(g);
-        groups[i++] = AUTHENTICATED_AUTHORITY;
+        groups[i] = AUTHENTICATED_AUTHORITY;
         return groups;
     }
 
