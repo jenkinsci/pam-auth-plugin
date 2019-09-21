@@ -158,8 +158,8 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
 
         @RequirePOST
         public FormValidation doTest() {
-            Jenkins jenkins = Jenkins.getInstance();
-            if (jenkins == null || !jenkins.hasPermission(Jenkins.ADMINISTER)) {
+            Jenkins jenkins = Jenkins.get();
+            if (!jenkins.hasPermission(Jenkins.ADMINISTER)) {
                 return FormValidation.ok();
             }
             File s = new File("/etc/shadow");
