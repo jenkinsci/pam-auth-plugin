@@ -1,13 +1,13 @@
 package hudson.security;
 
 import hudson.Functions;
+import hudson.os.PosixAPI;
 import hudson.security.SecurityRealm.SecurityComponents;
+import jnr.posix.POSIX;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.jvnet.hudson.test.HudsonTestCase;
 
 import java.util.Arrays;
-
-import static hudson.util.jna.GNUCLibrary.*;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -25,8 +25,8 @@ public class PAMSecurityRealmTest extends HudsonTestCase {
             // expected
         }
 
-        String name = LIBC.getpwuid(LIBC.geteuid()).pw_name;
-
+        POSIX api = PosixAPI.jnr();
+        String name = api.getpwuid(api.geteuid()).getLoginName();
         System.out.println(Arrays.asList(sc.userDetails.loadUserByUsername(name).getAuthorities()));
     }
 }
