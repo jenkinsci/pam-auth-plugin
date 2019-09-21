@@ -14,7 +14,7 @@
 
   <name>PAM Authentication plugin</name>
   <description>Adds Unix Pluggable Authentication Module (PAM) support to Jenkins</description>
-  <url>http://wiki.jenkins-ci.org/display/JENKINS/PAM+Authentication+Plugin</url>
+  <url>https://wiki.jenkins.io/display/JENKINS/PAM+Authentication+Plugin</url>
   <licenses>
     <license>
       <name>The MIT license</name>
