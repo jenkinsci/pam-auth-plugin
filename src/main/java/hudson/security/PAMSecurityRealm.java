@@ -44,7 +44,6 @@ import jnr.posix.Passwd;
 import org.jvnet.libpam.PAM;
 import org.jvnet.libpam.PAMException;
 import org.jvnet.libpam.UnixUser;
-import org.jvnet.libpam.impl.CLibrary;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.springframework.dao.DataAccessException;
 
@@ -111,8 +110,9 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
         } else {
             group = groupname;
         }
-        if(CLibrary.libc.getgrnam(group)==null)
+        if (PosixAPI.jnr().getgrnam(group) == null) {
             throw new UsernameNotFoundException(group);
+        }
         return new GroupDetails() {
             @Override
             public String getName() {
