@@ -4,15 +4,15 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
 import hudson.Functions;
+import hudson.os.PosixAPI;
 import hudson.security.SecurityRealm.SecurityComponents;
+import jnr.posix.POSIX;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import java.util.Arrays;
-
-import static hudson.util.jna.GNUCLibrary.*;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -35,8 +35,8 @@ public class PAMSecurityRealmTest {
             // expected
         }
 
-        String name = LIBC.getpwuid(LIBC.geteuid()).pw_name;
-
+        POSIX api = PosixAPI.jnr();
+        String name = api.getpwuid(api.geteuid()).getLoginName();
         System.out.println(Arrays.asList(sc.userDetails.loadUserByUsername(name).getAuthorities()));
     }
 }

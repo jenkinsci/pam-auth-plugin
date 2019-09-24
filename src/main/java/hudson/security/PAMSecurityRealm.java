@@ -39,14 +39,13 @@ import org.acegisecurity.GrantedAuthorityImpl;
 import org.acegisecurity.userdetails.User;
 import org.acegisecurity.userdetails.UserDetails;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
-import org.jruby.ext.posix.FileStat;
-import org.jruby.ext.posix.Group;
-import org.jruby.ext.posix.POSIX;
-import org.jruby.ext.posix.Passwd;
+import jnr.posix.FileStat;
+import jnr.posix.Group;
+import jnr.posix.POSIX;
+import jnr.posix.Passwd;
 import org.jvnet.libpam.PAM;
 import org.jvnet.libpam.PAMException;
 import org.jvnet.libpam.UnixUser;
-import org.jvnet.libpam.impl.CLibrary;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.springframework.dao.DataAccessException;
@@ -114,8 +113,9 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
         } else {
             group = groupname;
         }
-        if(CLibrary.libc.getgrnam(group)==null)
+        if (PosixAPI.jnr().getgrnam(group) == null) {
             throw new UsernameNotFoundException(group);
+        }
         return new GroupDetails() {
             @Override
             public String getName() {
@@ -166,7 +166,7 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
             if(s.exists() && !s.canRead()) {
                 // it looks like shadow password is in use, but we don't have read access
                 LOGGER.fine("/etc/shadow exists but not readable");
-                POSIX api = PosixAPI.get();
+                POSIX api = PosixAPI.jnr();
                 FileStat st = api.stat("/etc/shadow");
                 if(st==null)
                     return FormValidation.error(Messages.PAMSecurityRealm_ReadPermission());
