@@ -102,7 +102,7 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
         int i=0;
         for (String g : grps)
             groups[i++] = new GrantedAuthorityImpl(g);
-        groups[i++] = AUTHENTICATED_AUTHORITY;
+        groups[i] = AUTHENTICATED_AUTHORITY;
         return groups;
     }
 
@@ -158,8 +158,8 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
 
         @RequirePOST
         public FormValidation doTest() {
-            Jenkins jenkins = Jenkins.getInstance();
-            if (jenkins == null || !jenkins.hasPermission(Jenkins.ADMINISTER)) {
+            Jenkins jenkins = Jenkins.get();
+            if (!jenkins.hasPermission(Jenkins.ADMINISTER)) {
                 return FormValidation.ok();
             }
             File s = new File("/etc/shadow");

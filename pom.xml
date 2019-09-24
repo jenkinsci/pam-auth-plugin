@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>3.42</version>
+    <version>3.50</version>
   </parent>
 
   <artifactId>pam-auth</artifactId>
@@ -14,11 +14,11 @@
 
   <name>PAM Authentication plugin</name>
   <description>Adds Unix Pluggable Authentication Module (PAM) support to Jenkins</description>
-  <url>http://wiki.jenkins-ci.org/display/JENKINS/PAM+Authentication+Plugin</url>
+  <url>https://wiki.jenkins.io/display/JENKINS/PAM+Authentication+Plugin</url>
   <licenses>
     <license>
       <name>The MIT license</name>
-      <url>http://www.opensource.org/licenses/mit-license.php</url>
+      <url>https://opensource.org/licenses/MIT</url>
       <distribution>repo</distribution>
     </license>
   </licenses>
