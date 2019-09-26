@@ -61,58 +61,60 @@ import java.util.logging.Logger;
  * @since 1.282
  */
 public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
+
+    private static final Logger LOGGER = Logger.getLogger(PAMSecurityRealm.class.getName());
+
     public final String serviceName;
 
     @DataBoundConstructor
     public PAMSecurityRealm(String serviceName) {
         serviceName = Util.fixEmptyAndTrim(serviceName);
-        if(serviceName==null)   serviceName="sshd"; // use sshd as the default
+        if (serviceName == null) {
+            serviceName = "sshd"; // use sshd as the default
+        }
         this.serviceName = serviceName;
     }
 
     @Override
     protected synchronized UserDetails authenticate(String username, String password) throws AuthenticationException {
         try {
-            UnixUser uu = new PAM(serviceName).authenticate(username, password);
+            UnixUser u = new PAM(serviceName).authenticate(username, password);
 
             // I never understood why Acegi insists on keeping the password...
-            return new User(username,"",true,true,true,true, toAuthorities(uu));
+            return new User(username, "", true, true, true, true, toAuthorities(u));
         } catch (PAMException e) {
-            throw new BadCredentialsException(e.getMessage(),e);
+            throw new BadCredentialsException(e.getMessage(), e);
         }
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException, DataAccessException {
-        if(!UnixUser.exists(username))
-            throw new UsernameNotFoundException("No such Unix user: "+username);
+        if (!UnixUser.exists(username)) {
+            throw new UsernameNotFoundException("No such Unix user: " + username);
+        }
         try {
-            UnixUser uu = new UnixUser(username);
+            UnixUser u = new UnixUser(username);
             // return some dummy instance
-            return new User(username,"",true,true,true,true, toAuthorities(uu));
+            return new User(username, "", true, true, true, true, toAuthorities(u));
         } catch (PAMException e) {
-            throw new UsernameNotFoundException("Failed to load information about Unix user "+username,e);
+            throw new UsernameNotFoundException("Failed to load information about Unix user: " + username, e);
         }
     }
 
     private static GrantedAuthority[] toAuthorities(UnixUser u) {
-        Set<String> grps = u.getGroups();
-        GrantedAuthority[] groups = new GrantedAuthority[grps.size()+1];
-        int i=0;
-        for (String g : grps)
-            groups[i++] = new GrantedAuthorityImpl(g);
-        groups[i] = AUTHENTICATED_AUTHORITY;
-        return groups;
+        Set<String> groups = u.getGroups();
+        GrantedAuthority[] authorities = new GrantedAuthority[groups.size() + 1];
+        int i = 0;
+        for (String group : groups) {
+            authorities[i++] = new GrantedAuthorityImpl(group);
+        }
+        authorities[i] = AUTHENTICATED_AUTHORITY;
+        return authorities;
     }
 
     @Override
-    public GroupDetails loadGroupByGroupname(final String groupname) throws UsernameNotFoundException, DataAccessException {
-        final String group;
-        if(groupname.startsWith("@")) {
-            group = groupname.substring(1);
-        } else {
-            group = groupname;
-        }
+    public GroupDetails loadGroupByGroupname(String groupName) throws UsernameNotFoundException, DataAccessException {
+        String group = groupName.startsWith("@") ? groupName.substring(1) : groupName;
         if (PosixAPI.jnr().getgrnam(group) == null) {
             throw new UsernameNotFoundException(group);
         }
@@ -126,6 +128,7 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
 
     /**
      * {@inheritDoc}
+     *
      * @since 1.2
      */
     @Override
@@ -135,6 +138,7 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
 
     /**
      * {@inheritDoc}
+     *
      * @since 1.2
      */
     @Override
@@ -143,12 +147,14 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
     }
 
     public static final class DescriptorImpl extends Descriptor<SecurityRealm> {
+
         public String getDisplayName() {
             return Messages.PAMSecurityRealm_DisplayName();
         }
 
         /**
          * NSS/PAM databases are case sensitive... unless running OS-X (think different™)
+         *
          * @since 1.2
          */
         private static final IdStrategy STRATEGY =
@@ -163,32 +169,27 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
                 return FormValidation.ok();
             }
             File s = new File("/etc/shadow");
-            if(s.exists() && !s.canRead()) {
+            if (s.exists() && !s.canRead()) {
                 // it looks like shadow password is in use, but we don't have read access
                 LOGGER.fine("/etc/shadow exists but not readable");
                 POSIX api = PosixAPI.jnr();
                 FileStat st = api.stat("/etc/shadow");
-                if(st==null)
+                if (st == null) {
                     return FormValidation.error(Messages.PAMSecurityRealm_ReadPermission());
+                }
 
                 Passwd pwd = api.getpwuid(api.geteuid());
-                String user;
-                if(pwd!=null)   user=Messages.PAMSecurityRealm_User(pwd.getLoginName());
-                else            user=Messages.PAMSecurityRealm_CurrentUser();
+                String user = pwd != null ? Messages.PAMSecurityRealm_User(pwd.getLoginName()) : Messages.PAMSecurityRealm_CurrentUser();
 
-                String group;
                 Group g = api.getgrgid(st.gid());
-                if(g!=null)     group=g.getName();
-                else            group=String.valueOf(st.gid());
+                String group = g != null ? g.getName() : String.valueOf(st.gid());
 
-                if ((st.mode()&FileStat.S_IRGRP)!=0) {
+                if ((st.mode() & FileStat.S_IRGRP) != 0) {
                     // the file is readable to group. Jenkins should be in the right group, then
                     return FormValidation.error(Messages.PAMSecurityRealm_BelongToGroup(user, group));
                 } else {
                     Passwd opwd = api.getpwuid(st.uid());
-                    String owner;
-                    if(opwd!=null)  owner=opwd.getLoginName();
-                    else            owner=Messages.PAMSecurityRealm_Uid(st.uid());
+                    String owner = opwd != null ? opwd.getLoginName() : Messages.PAMSecurityRealm_Uid(st.uid());
 
                     return FormValidation.error(Messages.PAMSecurityRealm_RunAsUserOrBelongToGroupAndChmod(owner, user, group));
                 }
@@ -199,9 +200,6 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
 
     @Extension
     public static DescriptorImpl install() {
-        if(!Functions.isWindows()) return new DescriptorImpl();
-        return null;
+        return Functions.isWindows() ? null : new DescriptorImpl();
     }
-
-    private static final Logger LOGGER = Logger.getLogger(PAMSecurityRealm.class.getName());
 }
