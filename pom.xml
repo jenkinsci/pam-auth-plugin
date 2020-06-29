@@ -55,6 +55,13 @@
       <artifactId>libpam4j</artifactId>
       <version>1.11</version>
     </dependency>
+    <dependency>
+      <groupId>io.jenkins.configuration-as-code</groupId>
+      <artifactId>test-harness</artifactId>
+      <!-- versions past 1.36 require newer versions of Jenkins (~2.222) as a baseline -->
+      <version>1.36</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
 </project>
