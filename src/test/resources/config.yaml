@@ -1,0 +1,4 @@
+jenkins:
+  securityRealm:
+    pam:
+      serviceName: sudo
