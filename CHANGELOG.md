@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 1.6.1 (2021-11-04)
+
+-   Plugin modernization, nothing useful for the end user.
+
 ## Version 1.6 (2019-10-08)
 
 -   Use HTTPS URLs in `pom.xml`
