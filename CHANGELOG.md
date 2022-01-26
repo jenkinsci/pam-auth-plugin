@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 1.7 (2022-01-26)
+
+-   Add dependency on [jnr-posix API](https://plugins.jenkins.io/jnr-posix-api/) to prepare for removal of jnr-posix from Jenkins core.
+-   Plugin now requires Jenkins 2.303.3 or newer.
+
 ## Version 1.6.1 (2021-11-04)
 
 -   Plugin modernization, nothing useful for the end user.
