@@ -27,9 +27,14 @@ import hudson.Extension;
 import hudson.Functions;
 import hudson.Util;
 import hudson.model.Descriptor;
-import hudson.os.PosixAPI;
 import hudson.security.pam.Messages;
 import hudson.util.FormValidation;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
 import jenkins.model.IdStrategy;
 import jenkins.model.Jenkins;
 import org.acegisecurity.AuthenticationException;
@@ -39,10 +44,7 @@ import org.acegisecurity.GrantedAuthorityImpl;
 import org.acegisecurity.userdetails.User;
 import org.acegisecurity.userdetails.UserDetails;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
-import jnr.posix.FileStat;
-import jnr.posix.Group;
-import jnr.posix.POSIX;
-import jnr.posix.Passwd;
+
 import org.jvnet.libpam.PAM;
 import org.jvnet.libpam.PAMException;
 import org.jvnet.libpam.UnixUser;
@@ -115,7 +117,10 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
     @Override
     public GroupDetails loadGroupByGroupname(String groupName) throws UsernameNotFoundException, DataAccessException {
         String group = groupName.startsWith("@") ? groupName.substring(1) : groupName;
-        if (PosixAPI.jnr().getgrnam(group) == null) {
+
+        try {
+            FileSystems.getDefault().getUserPrincipalLookupService().lookupPrincipalByGroupName(groupName);
+        } catch (IOException e) {
             throw new UsernameNotFoundException(group);
         }
         return new GroupDetails() {
@@ -172,26 +177,23 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
             if (s.exists() && !s.canRead()) {
                 // it looks like shadow password is in use, but we don't have read access
                 LOGGER.fine("/etc/shadow exists but not readable");
-                POSIX api = PosixAPI.jnr();
-                FileStat st = api.stat("/etc/shadow");
-                if (st == null) {
+                String shadowOwner = null;
+                String shadowGroup = null;
+                PosixFileAttributes fileAttributes = null;
+                try {
+                    fileAttributes = Files.readAttributes(s.toPath(), PosixFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+                    shadowOwner = fileAttributes.owner().getName();
+                    shadowGroup = fileAttributes.group().getName();
+                } catch (IOException e) {
                     return FormValidation.error(Messages.PAMSecurityRealm_ReadPermission());
                 }
+                String user = System.getProperty("user.name") != null ? Messages.PAMSecurityRealm_User(System.getProperty("user.name")) : Messages.PAMSecurityRealm_CurrentUser();
 
-                Passwd pwd = api.getpwuid(api.geteuid());
-                String user = pwd != null ? Messages.PAMSecurityRealm_User(pwd.getLoginName()) : Messages.PAMSecurityRealm_CurrentUser();
-
-                Group g = api.getgrgid(st.gid());
-                String group = g != null ? g.getName() : String.valueOf(st.gid());
-
-                if ((st.mode() & FileStat.S_IRGRP) != 0) {
+                if (fileAttributes.permissions().contains(PosixFilePermission.GROUP_READ)) {
                     // the file is readable to group. Jenkins should be in the right group, then
-                    return FormValidation.error(Messages.PAMSecurityRealm_BelongToGroup(user, group));
+                    return FormValidation.error(Messages.PAMSecurityRealm_BelongToGroup(user, shadowGroup));
                 } else {
-                    Passwd opwd = api.getpwuid(st.uid());
-                    String owner = opwd != null ? opwd.getLoginName() : Messages.PAMSecurityRealm_Uid(st.uid());
-
-                    return FormValidation.error(Messages.PAMSecurityRealm_RunAsUserOrBelongToGroupAndChmod(owner, user, group));
+                    return FormValidation.error(Messages.PAMSecurityRealm_RunAsUserOrBelongToGroupAndChmod(shadowOwner, user, shadowGroup));
                 }
             }
             return FormValidation.ok(Messages.PAMSecurityRealm_Success());
