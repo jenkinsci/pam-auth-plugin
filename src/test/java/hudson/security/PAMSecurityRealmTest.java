@@ -4,9 +4,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
 import hudson.Functions;
-import hudson.os.PosixAPI;
 import hudson.security.SecurityRealm.SecurityComponents;
-import jnr.posix.POSIX;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,8 +33,8 @@ public class PAMSecurityRealmTest {
             // expected
         }
 
-        POSIX api = PosixAPI.jnr();
-        String name = api.getpwuid(api.geteuid()).getLoginName();
+
+        String name = System.getProperty("user.name");
         System.out.println(Arrays.asList(sc.userDetails.loadUserByUsername(name).getAuthorities()));
     }
 }
