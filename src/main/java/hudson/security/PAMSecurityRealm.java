@@ -122,6 +122,8 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
             FileSystems.getDefault().getUserPrincipalLookupService().lookupPrincipalByGroupName(groupName);
         } catch (IOException e) {
             throw new UsernameNotFoundException(group);
+        } catch (UnsupportedOperationException e) {
+            throw new UsernameNotFoundException("Unable to generate the lookup service to load " + group);
         }
         return new GroupDetails() {
             @Override
@@ -186,6 +188,8 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
                     shadowGroup = fileAttributes.group().getName();
                 } catch (IOException e) {
                     return FormValidation.error(Messages.PAMSecurityRealm_ReadPermission());
+                } catch (UnsupportedOperationException e) {
+                    return FormValidation.error(Messages.PAMSecurityRealm_UnsupportedOperation());
                 }
                 String user = System.getProperty("user.name") != null ? Messages.PAMSecurityRealm_User(System.getProperty("user.name")) : Messages.PAMSecurityRealm_CurrentUser();
 
