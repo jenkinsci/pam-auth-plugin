@@ -14,7 +14,6 @@
   <packaging>hpi</packaging>
 
   <name>PAM Authentication plugin</name>
-  <description>Adds Unix Pluggable Authentication Module (PAM) support to Jenkins</description>
   <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
   <licenses>
     <license>
