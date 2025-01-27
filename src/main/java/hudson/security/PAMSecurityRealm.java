@@ -37,22 +37,23 @@ import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import jenkins.model.IdStrategy;
 import jenkins.model.Jenkins;
-import org.acegisecurity.AuthenticationException;
-import org.acegisecurity.BadCredentialsException;
-import org.acegisecurity.GrantedAuthority;
-import org.acegisecurity.GrantedAuthorityImpl;
-import org.acegisecurity.userdetails.User;
-import org.acegisecurity.userdetails.UserDetails;
-import org.acegisecurity.userdetails.UsernameNotFoundException;
 
 import org.jvnet.libpam.PAM;
 import org.jvnet.libpam.PAMException;
 import org.jvnet.libpam.UnixUser;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.interceptor.RequirePOST;
-import org.springframework.dao.DataAccessException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -78,7 +79,7 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
     }
 
     @Override
-    protected synchronized UserDetails authenticate(String username, String password) throws AuthenticationException {
+    protected synchronized UserDetails authenticate2(String username, String password) throws AuthenticationException {
         try {
             UnixUser u = new PAM(serviceName).authenticate(username, password);
 
@@ -90,7 +91,7 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException, DataAccessException {
+    public UserDetails loadUserByUsername2(String username) throws UsernameNotFoundException {
         if (!UnixUser.exists(username)) {
             throw new UsernameNotFoundException("No such Unix user: " + username);
         }
@@ -103,19 +104,18 @@ public class PAMSecurityRealm extends AbstractPasswordBasedSecurityRealm {
         }
     }
 
-    private static GrantedAuthority[] toAuthorities(UnixUser u) {
+    private static Collection<? extends GrantedAuthority> toAuthorities(UnixUser u) {
         Set<String> groups = u.getGroups();
-        GrantedAuthority[] authorities = new GrantedAuthority[groups.size() + 1];
-        int i = 0;
+        Collection<GrantedAuthority> authorities = new ArrayList<>();
         for (String group : groups) {
-            authorities[i++] = new GrantedAuthorityImpl(group);
+            authorities.add(new SimpleGrantedAuthority(group));
         }
-        authorities[i] = AUTHENTICATED_AUTHORITY;
+        authorities.add(AUTHENTICATED_AUTHORITY2);
         return authorities;
     }
 
     @Override
-    public GroupDetails loadGroupByGroupname(String groupName) throws UsernameNotFoundException, DataAccessException {
+    public GroupDetails loadGroupByGroupname2(String groupName, boolean fetchMembers) throws UsernameNotFoundException {
         String group = groupName.startsWith("@") ? groupName.substring(1) : groupName;
 
         try {

@@ -5,10 +5,10 @@ import static org.junit.Assume.assumeFalse;
 
 import hudson.Functions;
 import hudson.security.SecurityRealm.SecurityComponents;
-import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.Arrays;
 
@@ -27,7 +27,7 @@ public class PAMSecurityRealmTest {
         SecurityComponents sc = new PAMSecurityRealm("sshd").getSecurityComponents();
 
         try {
-            sc.userDetails.loadUserByUsername("bogus-bogus-bogus");
+            sc.userDetails2.loadUserByUsername("bogus-bogus-bogus");
             fail("no such user");
         } catch (UsernameNotFoundException e) {
             // expected
@@ -35,6 +35,6 @@ public class PAMSecurityRealmTest {
 
 
         String name = System.getProperty("user.name");
-        System.out.println(Arrays.asList(sc.userDetails.loadUserByUsername(name).getAuthorities()));
+        System.out.println(Arrays.asList(sc.userDetails2.loadUserByUsername(name).getAuthorities()));
     }
 }
