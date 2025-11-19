@@ -3,28 +3,26 @@ package hudson.security;
 import hudson.Functions;
 import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
 import io.jenkins.plugins.casc.misc.JenkinsConfiguredWithCodeRule;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import io.jenkins.plugins.casc.misc.junit.jupiter.WithJenkinsConfiguredWithCode;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
-public class PAMSecurityRealmJCasCTest {
+@WithJenkinsConfiguredWithCode
+class PAMSecurityRealmJCasCTest {
 
-    @Rule
-    public JenkinsConfiguredWithCodeRule j = new JenkinsConfiguredWithCodeRule();
-
-    @BeforeClass
-    public static void beforeEverythingAssumeWindows() {
+    @BeforeAll
+    static void beforeAll() {
         assumeFalse(Functions.isWindows());
     }
 
     @Test
     @ConfiguredWithCode("config.yaml")
-    public void testConfigYaml() {
+    void testConfigYaml(JenkinsConfiguredWithCodeRule j) {
         SecurityRealm securityRealm = j.jenkins.getSecurityRealm();
         assertThat(securityRealm, instanceOf(PAMSecurityRealm.class));
         PAMSecurityRealm pam = (PAMSecurityRealm) securityRealm;
